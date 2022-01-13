@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>checkerboard</title>
+    <style>
+        #board {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            margin: auto;
+            width: 800px;
+            height: 800px;
+            border: gray 1px solid;
+        }
+
+        .ma {
+            background-image: url("ma.jpg");
+            background-size: 100px 100px;
+        }
+    </style>
+</head>
+<body>
+<input id="sx" style="margin-left: 650px">
+<input id="sy">
+<button id="start" onclick="start()">开始</button>
+<br>
+<br>
+<br>
+<div id="board"></div>
+<script>
+    const ROW = 8
+    const COL = 8
+    let SX = 0
+    let SY = 0
+    let board = document.getElementById("board")
+    const Next = [[-2, 1], [-1, 2], [1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1]]
+    let weightMap = new Array(COL)
+    for (let i = 0; i < weightMap.length; i++) {
+        weightMap[i] = new Array(ROW)
+    }
+    let checkBoard = new Array(COL)
+    for (let i = 0; i < checkBoard.length; i++) {
+        checkBoard[i] = new Array(ROW)
+        for (let j = 0; j < checkBoard[i].length; j++) {
+            checkBoard[i][j] = false
+        }
+    }
+    let isOK = false
+    let index = 1
+
+    function ToColor(it, color) {
+        if (color === "green") {
+            setTimeout(() => {
+                it.classList.add("ma")
+            }, index * 800)
+        } else {
+            setTimeout(() => {
+                it.classList.remove("ma")
+            }, index * 800)
+        }
+    }
+
+    function CreateCheckerBoard() {
+        for (let i = 0; i < ROW; i++) {
+            for (let j = 0; j < COL; j++) {
+                let button = document.createElement("button")
+                button.setAttribute("style", "height:100px; width:100px")
+                button.setAttribute("row", i.toString())
+                button.setAttribute("col", j.toString())
+                button.setAttribute("id", i.toString() + j.toString())
+                ToColor(button, "gray")
+                board.appendChild(button)
+            }
+            let br = document.createElement("br")
+            board.appendChild(br)
+        }
+    }
+
+    function Checkerboard(x, y) {
+        if (isOK) {
+            return
+        }
+        let point = document.getElementById(x.toString() + y.toString())
+        ToColor(point, "green")
+        point.innerText = index.toString()
+        let next = CountWeightForPoint(x, y)
+        for (let i = 0; i < next.length; i++) {
+            for (let j = i + 1; j < next.length; j++) {
+                if (next[i].weight > next[j].weight) {
+                    let t = next[i]
+                    next[i] = next[j]
+                    next[j] = t
+                }
+            }
+        }
+
+        for (let i = 0; i < next.length; i++) {
+            index++
+            Add(next[i].nx, next[i].ny, 1)
+            checkBoard[next[i].nx][next[i].ny] = true
+            Checkerboard(next[i].nx, next[i].ny)
+            if (index >= ROW * COL) {
+                isOK = true
+                return
+            }
+            checkBoard[next[i].nx][next[i].ny] = false
+            index--
+
+            ToColor(point, "gray")
+            point.innerText = ""
+            Add(next[i].nx, next[i].ny, -1)
+        }
+        point.weight = ""
+    }
+
+    function IsLegal(x, y) {
+        return x >= 0 && y >= 0 && x < ROW && y < COL && checkBoard[x][y] === false
+    }
+
+    function CountWeight(x, y) {
+        let ret = 0
+        for (let i = 0; i < Next.length; i++) {
+            let nx = x + Next[i][0]
+            let ny = y + Next[i][1]
+            if (IsLegal(nx, ny)) {
+                ret++
+            }
+        }
+        return ret
+    }
+
+    // function WeightInit() {
+    //     for (let i = 0; i < weightMap.length; i++) {
+    //         for (let j = 0; j < weightMap[i].length; j++) {
+    //             weightMap[i][j] = CountWeight(i, j)
+    //         }
+    //     }
+    // }
+
+    function CountWeightForPoint(x, y) {
+        let nextIndex = new Array(0)
+        for (let i = 0; i < Next.length; i++) {
+            let nx = x + Next[i][0]
+            let ny = y + Next[i][1]
+            if (IsLegal(nx, ny)) {
+                let arr = {
+                    nx: nx,
+                    ny: ny,
+                    weight: CountWeight(nx, ny)
+                }
+                nextIndex.push(arr)
+            }
+        }
+        return nextIndex
+    }
+
+    function Add(x, y, t) {
+        for (let i = 0; i < Next.length; i++) {
+            let nx = x + Next[i][0]
+            let ny = x + Next[i][1]
+            if (IsLegal(nx, ny)) {
+                weightMap[nx][ny] += t
+            }
+        }
+    }
+
+    function start() {
+        SX = parseInt(document.getElementById("sx").weight) - 1
+        SY = parseInt(document.getElementById("sy").weight) - 1
+        checkBoard[SX][SY] = true
+        Checkerboard(SX, SY)
+        setTimeout(() => {
+            let b = document.getElementById("board")
+            b.classList.add("Ma")
+        }, 64 * 800)
+    }
+
+    CreateCheckerBoard()
+
+
+</script>
+</body>
+</html>
